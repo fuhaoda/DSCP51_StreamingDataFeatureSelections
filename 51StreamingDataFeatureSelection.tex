@@ -1,0 +1,187 @@
+\documentclass[12pt]{article}
+\usepackage{amsfonts}
+\usepackage{amsbsy}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{rotating}
+\usepackage{graphics}
+\usepackage{epstopdf}
+\usepackage{pdfsync}
+\usepackage{natbib}
+\usepackage{caption}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+\textheight 9.2 in \textwidth 6.4 in
+\topmargin -0.15 in       % for PC
+\topmargin -0.7 in       % for Unix
+\oddsidemargin 0.10in %\evensidemargin 0.0in
+\parskip=.00in
+\renewcommand{\baselinestretch} {1.2}
+\makeatletter \setcounter{page}{1}
+\def\singlespace{\def\baselinestretch{1}\@normalsize}
+\def\endsinglespace{}
+
+\@addtoreset{equation}{section}
+\renewcommand{\theequation} {\arabic{section}.\arabic{equation}}
+\renewcommand{\thefigure}{\arabic{figure}}
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{remark}{Remark}
+\newtheorem{corollary}{Corollary}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+\newcommand{\distas}[1]{\mathbin{\overset{#1}{\kern\z@\sim}}}%
+
+
+% begin definition
+\def\conas{\stackrel{a.s.} {\rightarrow}}         % conv. a.s.
+\def\conP{\stackrel{\cal P} {\rightarrow}}        % conv. in probability
+\def\conD{\stackrel{\cal D} {\rightsquigarrow}}        % conv. in distribution
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\argmax}{argmax}
+\def\iid{\stackrel{ iid} {\sim}}          % i.i.d
+\def\hat{\widehat}
+\def\tilde{\widetilde}
+
+%general sets
+\def\cal{\mathcal}
+\def\calA{{\cal A}} %Action sets
+\def\calB{{\cal B}} %Bounded set
+\def\calC{{\cal C}} %Convex set
+\def\calH{{\cal H}} %Hilbert Space
+\def\calS{{\cal S}} %A regular set
+\def\calNr{{\cal N}_r} %Neighborhood
+\def\calX{{\cal X}} %Covariate space
+\def\calF{{\cal F}} %Function space
+
+%special sets
+\def\bbR{{\mathbb{R}}} %Real number
+\def\bbN{{\mathbb{N}}}%Natural number
+\def\bbQ{{\mathbb{Q}}} %Rational number
+\def\bbZ{{\mathbb{Z}}} %Integer
+\def\bbE{{\mathbb{E}}} %Empirical evaluation
+
+%Matrix
+\def\bA{{\bf A}}
+\def\bB{{\bf B}}
+\def\bC{{\bf C}}
+\def\bD{{\bf D}}
+\def\bH{{\bf H}}
+\def\bI{{\bf I}}
+\def\bJ{{\bf J}}
+\def\bP{{\bf P}}
+\def\bT{{\bf T}}
+\def\bW{{\bf W}}
+\def\bX{{\bf X}}
+
+%vector
+\def\balpha{{\boldsymbol \alpha}}
+\def\bbeta{{\boldsymbol \beta}}
+\def\btheta{{\boldsymbol \theta}}
+
+\def\bzero{{\bf 0}}
+\def\bone{{\bf 1}}
+\def\bbf{{\bf f}}
+\def\br{{\bf r}}
+\def\by{{\bf y}}
+
+%notations
+\def\sign{{\mathrm{sign}}}
+\def\var{{\mathrm{var}}}
+\def\cov{{\mathrm{cov}}}
+\def\ind{\perp\!\!\!\perp}
+
+%others
+\def\mif{\mathrm{if}\ }
+\def\ow{\mathrm{otherwise}\ }
+\def\st{\mathrm{subject\ to}\quad }
+\def\diag{\mathrm{diag}}
+\def\minimize{\mathrm{minimize}\quad }
+\def\maximize{\mathrm{maximize}\quad }
+\def\dom{{\rm dom}}
+
+
+
+\begin{document}
+\title
+{\bf My Data Science Challenging Problems \# 51: }
+\author
+{
+Drafted by Haoda Fu\\
+XXX \\
+XXXX \\
+\textsl{xxx} }
+\date{\today}
+
+\maketitle
+\begin{abstract}
+\textbf{{\color[rgb]{1,0,0} If you happen to have a solution of this question, please contact Haoda Fu at \href{mailto:fu\_haoda@lilly.com }{fu\_haoda@lilly.com} or  \href{mailto:ffuhaoda@gmail.com}{fuhaoda@gmail.com}  or commit your solution to \url{https://github.com/fuhaoda/DSCP51_StreamingDataFeatureSelections.git} }
+}. 
+
+\end{abstract}
+\noindent {\bf Key words and Phrases}: Feature selection; Functional PCA.
+
+\noindent {\bf Short title}: ***
+\section{Introduction}
+Digital health attracts increasing attention these days. In a digital health study,  patients wear various devices with different types of measurements for a period of time. We also have an outcome measure $Y$. One research question is what are the derived features from these sensor data to best predict the outcome of $Y$. We start from a basic form this research challenge, then extend to other situations.
+\section{Basic Form}
+Each patient $i$, this subject has a baseline measures denoted as $Z_i=\{Z_{i1}, \cdots, Z_{ip}\}$, at this time $t$, we also measure a vector of measurements from various wearable devices,
+\begin{align*}
+X_i(t)&=\left[\begin{array}{c}
+X_{i1}(t)	\\
+X_{i2}(t)	\\
+\vdots	\\
+X_{iq}(t)	\\
+\end{array}\right],
+\end{align*}
+The measurement frequency can be intensive such as 200Hz. For simplicity of our basic cases, we assume that we have 1 measurement per minute. Therefore, we have 1440 measurements per day. The study is about 3 months. So we approximately have 129,600 measurements for each subjects, denoted it as, $\bX_i$ which is a $q \times 129,600$ matrix where q is about equal to 10, and use $\bX$ as a generic version of $\bX_i$. Different rows of this matrix can be correlated. 
+
+For each subject, we also have one outcome measurement, say $Y_i \in \bbR $ which is a binary or continuous measurement.
+
+These studies often have about 50 to 200 subjects. 
+
+Our research question is how can we learn the relevant features from $\bX_i$ so that it can be associated to $Y_i$.
+
+There are two existing methods that we used frequently.
+\begin{itemize}
+	\item The first approach relays on human generalized features. We summarize each device data into different features, such as mean, maximal values, ranges, area under the curves etc... then we use these features to fit model. This approach relays on experience and we may miss important features. 
+	\item The second approach is based on ideas of PCA regression. We first conduct PCA or functional PCA on patients sensor data. Similar ideas also include using auto encoder and auto decoder to learn key features first, then use the features to predict response. However, learning the feature is unsupervised learning. Those features are often good representation of $\bX_i$, but they may not be the ideal features to predict $Y$.
+\end{itemize}
+
+We want to automatically search features in $\bX$, but we also need to come out certain regularization to balance the variance and bias trade off.  Otherwise, it is easily to generate features which will over fit the data. Along this line, a few ideas,
+\begin{itemize}
+	\item the features should be in low frequency domain.
+	\item the features should be in low order moments combinations (e.g. up to the second order moments), such as mean, standard deviation (SD), mean/SD, slop. 
+	\item the features should be highly representative to the original $\bX$, for example if can be a balance to be representative and predictive, e.g. $\bbE_n [\bX - g\{f(\bX)\}]^2+\lambda\bbE_n [Y-m\{f(\bX)\}]^2$, where $f(\bX)$ compressed $\bX$ into features.
+\end{itemize}
+
+We the data are large, deep learning approach could be useful here. We can either treat the $\bX$ as image using CNN or we can use RNN, such as LSTM algorithms. 
+
+
+\section{Further Extensions and Challenges}
+A few extensions as below,
+\begin{enumerate}
+	\item We can extend $Y$ into a vector as $Y(t)$. So that we past information of $X(t^-)$ can be used to predict $Y(t^+)$.
+	\item Different devices can have different sampling frequency. 
+	\item Missing data issues. 
+	\item $Y$ can be time to events or recurrent events.
+\end{enumerate}
+\section{Framework}
+
+
+
+\section*{Appendix: Proof of Equation ()}.
+
+
+
+
+\bibliographystyle{/Users/c082213/BoxSync/Help/References/asa_HD}
+\bibliography{/Users/c082213/BoxSync/Help/References/MyStats}
+
+
+\end{document}
